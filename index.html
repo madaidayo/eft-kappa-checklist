@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EFT Kappa 照合リスト</title>
+<style>
+:root{--bg:#111315;--panel:#1b1e21;--panel2:#24282c;--text:#f2f4f5;--muted:#9da5ad;--accent:#d8b36a;--ok:#70c58b;--border:#343a40}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif}
+.wrap{max-width:1050px;margin:auto;padding:24px 16px 48px}.hero{padding:22px 20px;background:linear-gradient(135deg,#202428,#17191b);border:1px solid var(--border);border-radius:16px;margin-bottom:16px}
+h1{margin:0 0 8px;font-size:28px}.sub{color:var(--muted);font-size:14px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}.stat{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:13px}.stat b{font-size:22px;display:block}.stat span{font-size:12px;color:var(--muted)}
+.progress{height:9px;background:#30353a;border-radius:99px;overflow:hidden;margin-top:12px}.bar{height:100%;width:0;background:var(--accent);transition:.25s}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.toolbar button,.toolbar select{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-size:13px}
+.section{background:var(--panel);border:1px solid var(--border);border-radius:14px;margin:12px 0;overflow:hidden}.section h2{font-size:17px;margin:0;padding:15px 16px;border-bottom:1px solid var(--border)}
+.row{display:grid;grid-template-columns:34px 1fr 110px 130px;gap:8px;align-items:center;padding:12px 16px;border-bottom:1px solid #292e33}.row:last-child{border-bottom:0}.row.done{opacity:.55}.row.done .name{text-decoration:line-through}.check{width:20px;height:20px;accent-color:var(--ok)}.name{font-weight:600}.meta{font-size:12px;color:var(--muted)}.badge{font-size:11px;padding:4px 7px;border-radius:6px;background:#30353a;color:#d8dde1;text-align:center}.badge.star{background:#51452d;color:#f1d18b}
+.extra{margin-top:18px}.extra .row{grid-template-columns:34px 1fr auto}.reset{color:#ffb0a8!important;border-color:#5b3936!important}
+@media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr)}.row{grid-template-columns:32px 1fr}.row .meta,.row .badge{grid-column:2}.hero{padding:18px}.name{font-size:14px}}
+.note{color:var(--muted);font-size:12px;line-height:1.6;margin-top:14px}
+
+.tree{padding:16px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;line-height:1.9;font-size:13px;overflow:auto}
+.tree .node{display:flex;gap:8px;align-items:center;white-space:nowrap}.tree .node input{accent-color:var(--ok)}
+.tree .node.done{opacity:.55;text-decoration:line-through}.tree .tag{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:10px;color:var(--accent)}
+.itemcount{float:right;font-size:13px;color:var(--muted);font-weight:400}.itemtools{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--border)}
+.itemtools button,.itemtools select{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:8px 10px}
+.itemgrid{display:grid;grid-template-columns:repeat(2,1fr)}.item{display:flex;align-items:center;gap:9px;padding:10px 14px;border-bottom:1px solid #292e33;border-right:1px solid #292e33;font-size:13px}
+.static-row{cursor:pointer}.static-item{cursor:pointer}.item.done{opacity:.5;text-decoration:line-through}.item input{accent-color:var(--ok)}
+@media(max-width:700px){.itemgrid{grid-template-columns:1fr}}
+
+.taskrow{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:12px 16px;border-bottom:1px solid #292e33}
+.taskrow:last-child{border-bottom:0}.taskmain{min-width:0}.tasktitle{font-weight:700}.taskmeta{font-size:12px;color:var(--muted);margin-top:2px}
+.taskopen{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12px}
+.taskdetail{display:none;background:#151719;border-top:1px solid var(--border);padding:12px 16px 14px;color:#d5d9dd;font-size:13px;line-height:1.65}
+.taskdetail.open{display:block}.taskdetail a{color:var(--accent)}
+.collector-image-note{color:var(--muted);font-size:12px;margin:4px 0 10px}
+.itemcard{display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid #292e33}
+.itemimg{width:52px;height:52px;object-fit:contain;background:#111;border-radius:8px;border:1px solid var(--border);image-rendering:auto}
+.itemname{font-weight:600;font-size:13px}.itemreq{font-size:11px;color:var(--muted);margin-top:2px}
+.qty{width:58px;background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 6px;text-align:center;font-size:14px}
+.qtywrap{display:flex;align-items:center;gap:5px}.slash{color:var(--muted);font-size:12px}
+.itemcard.done{opacity:.55}.itemcard.done .itemname{text-decoration:line-through}
+@media(max-width:700px){.taskrow{grid-template-columns:30px 1fr}.taskopen{grid-column:2;justify-self:start}.collector-image-note{color:var(--muted);font-size:12px;margin:4px 0 10px}
+.itemcard{grid-template-columns:50px 1fr auto}.itemimg{width:46px;height:46px}.qty{width:54px}}
+
+.taskfallback{border-bottom:1px solid #292e33}.taskfallback summary{list-style:none;display:flex;gap:10px;align-items:center;padding:12px 16px;cursor:pointer}.taskfallback summary::-webkit-details-marker{display:none}.fallbackcheck{width:24px;height:24px;accent-color:#66d9a3;flex:0 0 auto}.taskfallback .fallback-title{font-weight:700}.fallbackdetail .fbmap{display:inline-block;padding:4px 7px;border-radius:6px;background:#252a2f;color:#f0c36b;font-weight:700;font-size:11px}.fallbackdetail .fbobjective{margin-top:6px}.taskfallback summary small{display:block;color:var(--muted);font-size:11px;margin-top:2px}.fallbackdetail{padding:0 16px 14px 50px;color:#d5d9dd;font-size:13px;line-height:1.65;background:#151719}.fallbackdetail p{margin:8px 0}.fallbackdetail a{color:var(--accent)}.static-itemcard{min-width:0}
+
+.tree{display:block!important;padding:10px 14px}.static-node{display:flex!important;align-items:center;gap:8px;min-height:36px;white-space:pre-wrap}.treebox{width:20px;flex:0 0 20px;font-size:20px;color:#9aa3ad}.treelabel{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}.tree-root{padding:8px 0}
+.itemimg{object-fit:contain;background:#111315}.static-itemcard .itemimg{width:74px;height:74px;display:block;flex:0 0 74px}
+.taskmap{margin-top:5px;font-size:12px;color:#8fb8d8;font-weight:700}.taskobjective{margin-top:3px;font-size:13px;line-height:1.5;color:#d8dde2}.taskrow.done .taskobjective{opacity:.55}.taskrow.done .tasktitle{text-decoration:line-through;opacity:.6}</style>
+<style>
+.taskmap{display:inline-block;margin:4px 0 8px;padding:5px 8px;border-radius:7px;background:#252a2f;font-weight:700;font-size:12px;color:#f0c36b}
+.itemfallback{display:none;align-items:center;justify-content:center;font-weight:800;font-size:16px;background:#242a30;color:#cfd5da}
+.static-itemcard .itemfallback{display:none}
+</style></head>
+<body>
+<div class="wrap">
+<section class="hero">
+<h1>🎯 EFT Kappa 照合リスト</h1>
+<div class="sub">Kappa取得ルートを「前提タスク → Collector前提 → Collector」で照合。チェック状態はこのブラウザに自動保存されます。</div>
+<div class="stats">
+<div class="stat"><b id="done">0</b><span>完了タスク</span></div>
+<div class="stat"><b id="total">0</b><span>掲載タスク</span></div>
+<div class="stat"><b id="remain">0</b><span>残り</span></div>
+<div class="stat"><b id="pct">0%</b><span>進捗</span></div>
+</div>
+<div class="progress"><div class="bar" id="bar"></div></div>
+</section>
+
+<div class="toolbar">
+<button onclick="markAll(true)">すべて完了</button>
+<button onclick="markAll(false)">すべて未完了</button>
+<button class="reset" onclick="resetAll()">進捗をリセット</button>
+<select id="filter" onchange="render()">
+<option value="all">すべて表示</option><option value="todo">未完了のみ</option><option value="done">完了のみ</option>
+</select>
+</div>
+
+<div id="app"><section class="section"><h2>🧭 Kappa対象タスク（サンプル）</h2>
+<details class="taskfallback"><summary><input class="fallbackcheck" type="checkbox" data-task="chemical1" onclick="event.stopPropagation()"><span><span class="fallback-title">Chemical - Part 1</span><small>Skier · 前提</small></span></summary><div class="fallbackdetail"><span class="fbmap">🗺️ CUSTOMS</span><div class="fbobjective">🎯 Secure Folder 0013＋Dorm 220 Keyを回収 → Skier</div></div></details>
+<details class="taskfallback"><summary><input class="fallbackcheck" type="checkbox" data-task="chemical2" onclick="event.stopPropagation()"><span><span class="fallback-title">Chemical - Part 2</span><small>Skier · 前提</small></span></summary><div class="fallbackdetail"><span class="fbmap">🗺️ CUSTOMS</span><div class="fbobjective">🎯 Dorm 220でTGロゴの封書＋Sliderkey Secure Flash driveを回収 → Skier</div></div></details>
+<details class="taskfallback"><summary><input class="fallbackcheck" type="checkbox" data-task="chemical3" onclick="event.stopPropagation()"><span><span class="fallback-title">Chemical - Part 3</span><small>Skier · Kappaルート</small></span></summary><div class="fallbackdetail"><span class="fbmap">🗺️ FACTORY</span><div class="fbobjective">🎯 事務所棟3階でSyringe with a chemicalを回収 → Skier</div></div></details>
+<details class="taskfallback"><summary><input class="fallbackcheck" type="checkbox" data-task="chemical4" onclick="event.stopPropagation()"><span><span class="fallback-title">Chemical - Part 4</span><small>Skier · Kappaルート</small></span></summary><div class="fallbackdetail"><span class="fbmap">🗺️ CUSTOMS</span><div class="fbobjective">🎯 科学薬品輸送バンを発見 → MS2000 Marker設置。Chemical 3択の1つ</div></div></details>
+<details class="taskfallback"><summary><input class="fallbackcheck" type="checkbox" data-task="bigcustomer" onclick="event.stopPropagation()"><span><span class="fallback-title">Big Customer</span><small>Prapor · Kappa分岐</small></span></summary><div class="fallbackdetail"><span class="fbmap">🗺️ CUSTOMS</span><div class="fbobjective">🎯 科学薬品輸送バンを発見 → MS2000 Marker設置。3択なので1つだけ完了</div></div></details>
+<details class="taskfallback"><summary><input class="fallbackcheck" type="checkbox" data-task="outofcuriosity" onclick="event.stopPropagation()"><span><span class="fallback-title">Out of Curiosity</span><small>Therapist · Kappa分岐</small></span></summary><div class="fallbackdetail"><span class="fbmap">🗺️ CUSTOMS</span><div class="fbobjective">🎯 科学薬品輸送バンを発見 → MS2000 Marker設置。3択なので1つだけ完了</div></div></details>
+<details class="taskfallback"><summary><input class="fallbackcheck" type="checkbox" data-task="postman1" onclick="event.stopPropagation()"><span><span class="fallback-title">Postman Pat - Part 1</span><small>Prapor · 前提</small></span></summary><div class="fallbackdetail"><span class="fbmap">🗺️ FACTORY</span><div class="fbobjective">🎯 南側のDead Scav付近で封書を回収 → Factoryから脱出 → Therapist</div></div></details>
+<details class="taskfallback"><summary><input class="fallbackcheck" type="checkbox" data-task="postman2" onclick="event.stopPropagation()"><span><span class="fallback-title">Postman Pat - Part 2</span><small>Therapist · Kappaルート</small></span></summary><div class="fallbackdetail"><span class="fbmap">🗺️ FACTORY</span><div class="fbobjective">🎯 回収したメッセンジャーの封書をTherapistへ渡す</div></div></details>
+<details class="taskfallback"><summary><input class="fallbackcheck" type="checkbox" data-task="sew1" onclick="event.stopPropagation()"><span><span class="fallback-title">Sew it Good - Part 1</span><small>Ragman · 前提</small></span></summary><div class="fallbackdetail"><span class="fbmap">🗺️ —</span><div class="fbobjective">🎯 Ski hat ×1＋Pilgrim tourist backpack ×1をFiRで確保 → Ragman</div></div></details>
+<details class="taskfallback"><summary><input class="fallbackcheck" type="checkbox" data-task="sew2" onclick="event.stopPropagation()"><span><span class="fallback-title">Sew it Good - Part 2</span><small>Ragman · Kappaルート</small></span></summary><div class="fallbackdetail"><span class="fbmap">🗺️ —</span><div class="fbobjective">🎯 WARTECH TV-109 + TV-106 ×2＋BlackRock Gray ×2をFiRで確保 → Ragman</div></div></details>
+<details class="taskfallback"><summary><input class="fallbackcheck" type="checkbox" data-task="ts1" onclick="event.stopPropagation()"><span><span class="fallback-title">The Tarkov Shooter - Part 1</span><small>Jaeger · 前提</small></span></summary><div class="fallbackdetail"><span class="fbmap">🗺️ —</span><div class="fbobjective">🎯 スコープなしボルトアクションで40m以上からSCAVを5キル</div></div></details>
+<details class="taskfallback"><summary><input class="fallbackcheck" type="checkbox" data-task="ts2" onclick="event.stopPropagation()"><span><span class="fallback-title">The Tarkov Shooter - Part 2</span><small>Jaeger · 前提</small></span></summary><div class="fallbackdetail"><span class="fbmap">🗺️ —</span><div class="fbobjective">🎯 ボルトアクションで40m以上。脚3発＋頭2発を命中</div></div></details>
+<details class="taskfallback"><summary><input class="fallbackcheck" type="checkbox" data-task="ts3" onclick="event.stopPropagation()"><span><span class="fallback-title">The Tarkov Shooter - Part 3</span><small>Jaeger · 前提</small></span></summary><div class="fallbackdetail"><span class="fbmap">🗺️ —</span><div class="fbobjective">🎯 ボルトアクションで25m以内からPMCを3キル</div></div></details>
+<details class="taskfallback"><summary><input class="fallbackcheck" type="checkbox" data-task="ts4" onclick="event.stopPropagation()"><span><span class="fallback-title">The Tarkov Shooter - Part 4</span><small>Jaeger · Kappaルート</small></span></summary><div class="fallbackdetail"><span class="fbmap">🗺️ —</span><div class="fbobjective">🎯 ボルトアクションで敵を15キル。距離・敵種の縛りなし</div></div></details>
+<details class="taskfallback"><summary><input class="fallbackcheck" type="checkbox" data-task="sbh" onclick="event.stopPropagation()"><span><span class="fallback-title">A Shooter Born in Heaven</span><small>Mechanic · Kappaルート</small></span></summary><div class="fallbackdetail"><span class="fbmap">🗺️ CUSTOMS / LIGHTHOUSE / STREETS / SHORELINE / INTERCHANGE / GROUND ZERO / WOODS / RESERVE</span><div class="fbobjective">🎯 4マップペアそれぞれでボルトアクションのPMCヘッドショットを5キル</div></div></details>
+<details class="taskfallback"><summary><input class="fallbackcheck" type="checkbox" data-task="collector" onclick="event.stopPropagation()"><span><span class="fallback-title">Collector</span><small>Fence · 最終タスク</small></span></summary><div class="fallbackdetail"><span class="fbmap">🗺️ —</span><div class="fbobjective">🎯 44アイテムを各1個FiRで確保。7トレーダーLL4＋Fence Karma +3などの条件も確認</div></div></details>
+</section></div>
+
+
+<section class="section">
+<h2>🌳 必要タスクからのツリー</h2>
+<div id="tree" class="tree"><div class="node tree-root"><strong>KAPPA ROOT</strong></div>
+<div class="node static-node"><span class="treebox">□</span><span class="treelabel">├─ Chemical - Part 1</span><span class="tag">前提</span></div>
+<div class="node static-node"><span class="treebox">□</span><span class="treelabel">│  └─ Chemical - Part 2</span><span class="tag">前提</span></div>
+<div class="node static-node"><span class="treebox">□</span><span class="treelabel">│     └─ Chemical - Part 3</span><span class="tag">Kappa</span></div>
+<div class="node static-node"><span class="treebox">□</span><span class="treelabel">│        └─ Chemical - Part 4</span><span class="tag">Kappa</span></div>
+<div class="node static-node"><span class="treebox">□</span><span class="treelabel">│           ├─ Big Customer</span><span class="tag">Kappa分岐</span></div>
+<div class="node static-node"><span class="treebox">□</span><span class="treelabel">│           └─ Out of Curiosity</span><span class="tag">Kappa分岐</span></div>
+<div class="node static-node"><span class="treebox">□</span><span class="treelabel">├─ Postman Pat - Part 1</span><span class="tag">前提</span></div>
+<div class="node static-node"><span class="treebox">□</span><span class="treelabel">│  └─ Postman Pat - Part 2</span><span class="tag">Kappa</span></div>
+<div class="node static-node"><span class="treebox">□</span><span class="treelabel">├─ Sew it Good - Part 1</span><span class="tag">前提</span></div>
+<div class="node static-node"><span class="treebox">□</span><span class="treelabel">│  └─ Sew it Good - Part 2</span><span class="tag">Kappa</span></div>
+<div class="node static-node"><span class="treebox">□</span><span class="treelabel">├─ The Tarkov Shooter - Part 1</span><span class="tag">前提</span></div>
+<div class="node static-node"><span class="treebox">□</span><span class="treelabel">│  └─ Part 2</span><span class="tag">前提</span></div>
+<div class="node static-node"><span class="treebox">□</span><span class="treelabel">│     └─ Part 3</span><span class="tag">前提</span></div>
+<div class="node static-node"><span class="treebox">□</span><span class="treelabel">│        └─ Part 4</span><span class="tag">Kappa</span></div>
+<div class="node static-node"><span class="treebox">□</span><span class="treelabel">├─ A Shooter Born in Heaven</span><span class="tag">Kappa</span></div>
+<div class="node static-node"><span class="treebox">□</span><span class="treelabel">└─ Collector</span><span class="tag">Kappa</span></div></div>
+<div class="note">枝分かれは現行ライブデータ上のChemical系。Big Customer / Out of Curiosityは分岐として表示しています。</div><div class="note">※ タスクは「内容」をタップすると目的を表示。Collectorアイテムは必要数・現在保有数を入力でき、保有数が必要数以上になると自動で完了扱いになります。アイコンはTarkov.devの現行アイコンを使用しています。</div>
+</section>
+
+<section class="section">
+<h2>🎒 Collector 必要アイテム <span id="itemCount" class="itemcount">0 / 44</span></h2>
+<div class="itemtools">
+<button onclick="markItems(true)">全アイテム完了</button>
+<button onclick="markItems(false)">全アイテム未完了</button>
+<select id="itemFilter" onchange="renderItems()">
+<option value="all">すべて</option><option value="todo">未入手のみ</option><option value="done">入手済みのみ</option>
+</select>
+</div>
+<div class="itemgrid" id="items"><div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/5bc9b355d4351e6d1509862a-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">1. #FireKlean gun lube</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="#FireKlean gun lube 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/5bc9be8fd4351e00334cae6e-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">2. 42 Signature Blend English Tea</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="42 Signature Blend English Tea 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/5bc9c1e2d4351e00367fbcf0-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">3. Antique axe</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Antique axe 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/62a091170b9d3c46de5b6cf2-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">4. Axel parrot figurine</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Axel parrot figurine 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/62a09dd4621468534a797ac7-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">5. Baddie&#x27;s red beard</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Baddie&#x27;s red beard 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/62a09e73af34e73a266d932a-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">6. BakeEzy cook book</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="BakeEzy cook book 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/5bc9c049d4351e44f824d360-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">7. Battered antique book</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Battered antique book 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/62a08f4c4f842e1bd12d9d62-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">8. BEAR Buddy plush toy</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="BEAR Buddy plush toy 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/6a3557f841667bc4bb00fea4-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">9. Bottle of YMXC water</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Bottle of YMXC water 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/5e54f6af86f7742199090bf3-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">10. Can of Dr. Lupo&#x27;s coffee beans</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Can of Dr. Lupo&#x27;s coffee beans 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/6a3532423ec9d7082a05d430-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">11. Can of GigaBeef meat</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Can of GigaBeef meat 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/60b0f93284c20f0feb453da7-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">12. Can of RatCola soda</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Can of RatCola soda 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/5bc9b9ecd4351e3bac122519-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">13. Deadlyslob&#x27;s beard oil</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Deadlyslob&#x27;s beard oil 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/69f9d547b98cc4120608692a-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">14. DesmondPilak CD</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="DesmondPilak CD 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/6937f02dfd6488bb27024839-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">15. Domontovich ushanka hat</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Domontovich ushanka hat 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/62a09d79de7ac81993580530-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">16. DRD body armor</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="DRD body armor 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/69f9d60b5de6674f08060f2a-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">17. Dunduk floppy disk</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Dunduk floppy disk 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/5bd073a586f7747e6f135799-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">18. Fake mustache</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Fake mustache 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/6a35322b81d315afe1018ef3-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">19. French bakery baguette</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="French bakery baguette 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/62a09d3bcf4a99369e262447-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">20. Gingy keychain</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Gingy keychain 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="" alt=""><div><div class="itemname">21. Glorious E mask</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Glorious E mask 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/5bc9b720d4351e450201234b-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">22. Golden 1GPhone smartphone</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Golden 1GPhone smartphone 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/62a09cfe4f842e1bd12da3e4-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">23. Golden egg</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Golden egg 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/66b37f114410565a8f6789e2-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">24. Inseq gas pipe wrench</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Inseq gas pipe wrench 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/62a09e410b9d3c46de5b6e78-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">25. JohnB Liquid DNB glasses</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="JohnB Liquid DNB glasses 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/6a4ce086b5644e9f0a08d08a-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">26. LM KC-130 model aircraft</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="LM KC-130 model aircraft 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/60b0f7057897d47c5b04ab94-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">27. Loot Lord plushie</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Loot Lord plushie 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/60b0f561c4449e4cb624c1d7-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">28. LVNDMARK&#x27;s rat poison</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="LVNDMARK&#x27;s rat poison 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/6937edb912d456a817083e82-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">29. Mazoni golden dumbbell</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Mazoni golden dumbbell 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/62a09ec84f842e1bd12da3f2-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">30. Missam forklift key</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Missam forklift key 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/69398e94ca94fd2877039504-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">31. Nut Sack balaclava</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Nut Sack balaclava 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/5e54f79686f7744022011103-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">32. Pestily plague mask</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Pestily plague mask 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/62a09cb7a04c0c5c6e0a84f8-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">33. Press pass (issued for NoiceGuy)</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Press pass (issued for NoiceGuy) 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/5e54f62086f774219b0f1937-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">34. Raven figurine</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Raven figurine 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/69f9d319c906cd16da03b374-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">35. SheefGG piggy bank</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="SheefGG piggy bank 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/5e54f76986f7740366043752-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">36. Shroud half-mask</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Shroud half-mask 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/5bc9bdb8d4351e003562b8a1-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">37. Silver Badge</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Silver Badge 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/5fd8d28367cb5e077335170f-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">38. Smoke balaclava</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Smoke balaclava 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/66b37ea4c5d72b0277488439-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">39. Tamatthi kunai knife replica</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Tamatthi kunai knife replica 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/6937ecf8628ee476240c07cb-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">40. Tigzresq splint</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Tigzresq splint 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/5f745ee30acaeb0d490d8c5b-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">41. Veritas guitar pick</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Veritas guitar pick 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/62a09e974f842e1bd12da3f0-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">42. Video cassette with the Cyborg Killer movie</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Video cassette with the Cyborg Killer movie 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/66b37eb4acff495a29492407-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">43. Viibiin sneaker</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="Viibiin sneaker 保有数"><span class="slash">/ 1</span></div></div>
+<div class="itemcard static-itemcard"><img class="itemimg" src="https://assets.tarkov.dev/60b0f6c058e0b0481a09ad11-icon.webp" alt="" loading="lazy" referrerpolicy="no-referrer"><div><div class="itemname">44. WZ Wallet</div><div class="itemreq">必要数: 1</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="0" aria-label="WZ Wallet 保有数"><span class="slash">/ 1</span></div></div></div>
+</section>
+
+<section class="section extra">
+<h2>📋 Kappa取得条件</h2>
+<div class="row"><input class="check" type="checkbox" data-extra="level" onchange="saveExtra(this)"><div><div class="name">PMC Lv42</div><div class="meta">レベル条件</div></div><span class="badge">条件</span></div>
+<div class="row"><input class="check" type="checkbox" data-extra="fence" onchange="saveExtra(this)"><div><div class="name">Fence Rep +3.0以上</div><div class="meta">Fence評価値</div></div><span class="badge">条件</span></div>
+<div class="row"><input class="check" type="checkbox" data-extra="prapor" onchange="saveExtra(this)"><div><div class="name">Prapor LL4</div></div><span class="badge">Trader</span></div>
+<div class="row"><input class="check" type="checkbox" data-extra="therapist" onchange="saveExtra(this)"><div><div class="name">Therapist LL4</div></div><span class="badge">Trader</span></div>
+<div class="row"><input class="check" type="checkbox" data-extra="skier" onchange="saveExtra(this)"><div><div class="name">Skier LL4</div></div><span class="badge">Trader</span></div>
+<div class="row"><input class="check" type="checkbox" data-extra="peacekeeper" onchange="saveExtra(this)"><div><div class="name">Peacekeeper LL4</div></div><span class="badge">Trader</span></div>
+<div class="row"><input class="check" type="checkbox" data-extra="mechanic" onchange="saveExtra(this)"><div><div class="name">Mechanic LL4</div></div><span class="badge">Trader</span></div>
+<div class="row"><input class="check" type="checkbox" data-extra="ragman" onchange="saveExtra(this)"><div><div class="name">Ragman LL4</div></div><span class="badge">Trader</span></div>
+<div class="row"><input class="check" type="checkbox" data-extra="jaeger" onchange="saveExtra(this)"><div><div class="name">Jaeger LL4</div></div><span class="badge">Trader</span></div>
+<div class="row"><input class="check" type="checkbox" data-extra="collector" onchange="saveExtra(this)"><div><div class="name">Collector完了・必要アイテム全納品</div></div><span class="badge star">KAPPA</span></div>
+</section>
+
+<p class="note">※タスク条件は現行シーズンの情報を基にした照合用です。ゲーム側の仕様変更・データベース更新で前提関係や必要条件が変わる場合があります。</p>
+</div>
+
+<script>
+const groups=[
+["Chemical（分岐あり）",[
+["chemical1","Chemical - Part 1","Skier","前提",false],
+["chemical2","Chemical - Part 2","Skier","前提",false],
+["chemical3","Chemical - Part 3","Skier","Kappaルート",true],
+["chemical4","Chemical - Part 4","Skier","Kappaルート",true],
+["bigcustomer","Big Customer","Prapor","Kappa分岐",true],
+["outofcuriosity","Out of Curiosity","Therapist","Kappa分岐",true]]],
+["Postman Pat",[
+["postman1","Postman Pat - Part 1","Prapor","前提",false],
+["postman2","Postman Pat - Part 2","Therapist","Kappaルート",true]]],
+["Sew it Good",[
+["sew1","Sew it Good - Part 1","Ragman","前提",false],
+["sew2","Sew it Good - Part 2","Ragman","Kappaルート",true]]],
+["The Tarkov Shooter",[
+["ts1","The Tarkov Shooter - Part 1","Jaeger","前提",false],
+["ts2","The Tarkov Shooter - Part 2","Jaeger","前提",false],
+["ts3","The Tarkov Shooter - Part 3","Jaeger","前提",false],
+["ts4","The Tarkov Shooter - Part 4","Jaeger","Kappaルート",true]]],
+["Shooter Born in Heaven",[
+["sbh","A Shooter Born in Heaven","Mechanic","Kappaルート",true]]],
+["Collector",[
+["collector","Collector","Fence","最終タスク",true]]]
+];
+
+const collectorItems=[
+{name:"#FireKlean gun lube",required:1,img:"https://assets.tarkov.dev/5bc9b355d4351e6d1509862a-icon.webp"},
+{name:"42 Signature Blend English Tea",required:1,img:"https://assets.tarkov.dev/5bc9be8fd4351e00334cae6e-icon.webp"},
+{name:"Antique axe",required:1,img:"https://assets.tarkov.dev/5bc9c1e2d4351e00367fbcf0-icon.webp"},
+{name:"Axel parrot figurine",required:1,img:"https://assets.tarkov.dev/62a091170b9d3c46de5b6cf2-icon.webp"},
+{name:"Baddie's red beard",required:1,img:"https://assets.tarkov.dev/62a09dd4621468534a797ac7-icon.webp"},
+{name:"BakeEzy cook book",required:1,img:"https://assets.tarkov.dev/62a09e73af34e73a266d932a-icon.webp"},
+{name:"Battered antique book",required:1,img:"https://assets.tarkov.dev/5bc9c049d4351e44f824d360-icon.webp"},
+{name:"BEAR Buddy plush toy",required:1,img:"https://assets.tarkov.dev/62a08f4c4f842e1bd12d9d62-icon.webp"},
+{name:"Bottle of YMXC water",required:1,img:"https://assets.tarkov.dev/6a3557f841667bc4bb00fea4-icon.webp"},
+{name:"Can of Dr. Lupo's coffee beans",required:1,img:"https://assets.tarkov.dev/5e54f6af86f7742199090bf3-icon.webp"},
+{name:"Can of GigaBeef meat",required:1,img:"https://assets.tarkov.dev/6a3532423ec9d7082a05d430-icon.webp"},
+{name:"Can of RatCola soda",required:1,img:"https://assets.tarkov.dev/60b0f93284c20f0feb453da7-icon.webp"},
+{name:"Deadlyslob's beard oil",required:1,img:"https://assets.tarkov.dev/5bc9b9ecd4351e3bac122519-icon.webp"},
+{name:"DesmondPilak CD",required:1,img:"https://assets.tarkov.dev/69f9d547b98cc4120608692a-icon.webp"},
+{name:"Domontovich ushanka hat",required:1,img:"https://assets.tarkov.dev/6937f02dfd6488bb27024839-icon.webp"},
+{name:"DRD body armor",required:1,img:"https://assets.tarkov.dev/62a09d79de7ac81993580530-icon.webp"},
+{name:"Dunduk floppy disk",required:1,img:"https://assets.tarkov.dev/69f9d60b5de6674f08060f2a-icon.webp"},
+{name:"Fake mustache",required:1,img:"https://assets.tarkov.dev/5bd073a586f7747e6f135799-icon.webp"},
+{name:"French bakery baguette",required:1,img:"https://assets.tarkov.dev/6a35322b81d315afe1018ef3-icon.webp"},
+{name:"Gingy keychain",required:1,img:"https://assets.tarkov.dev/62a09d3bcf4a99369e262447-icon.webp"},
+{name:"Golden 1GPhone smartphone",required:1,img:"https://assets.tarkov.dev/5bc9b720d4351e450201234b-icon.webp"},
+{name:"Golden egg",required:1,img:"https://assets.tarkov.dev/62a09cfe4f842e1bd12da3e4-icon.webp"},
+{name:"Inseq gas pipe wrench",required:1,img:"https://assets.tarkov.dev/66b37f114410565a8f6789e2-icon.webp"},
+{name:"JohnB Liquid DNB glasses",required:1,img:"https://assets.tarkov.dev/62a09e410b9d3c46de5b6e78-icon.webp"},
+{name:"Glorious E lightweight armored mask",required:1,img:"https://assets.tarkov.dev/62a09e08de7ac81993580532-base-image.webp"},
+{name:"LM KC-130 model aircraft",required:1,img:"https://assets.tarkov.dev/6a4ce086b5644e9f0a08d08a-icon.webp"},
+{name:"Loot Lord plushie",required:1,img:"https://assets.tarkov.dev/60b0f7057897d47c5b04ab94-icon.webp"},
+{name:"LVNDMARK's rat poison",required:1,img:"https://assets.tarkov.dev/60b0f561c4449e4cb624c1d7-icon.webp"},
+{name:"Mazoni golden dumbbell",required:1,img:"https://assets.tarkov.dev/6937edb912d456a817083e82-icon.webp"},
+{name:"Missam forklift key",required:1,img:"https://assets.tarkov.dev/62a09ec84f842e1bd12da3f2-icon.webp"},
+{name:"Nut Sack balaclava",required:1,img:"https://assets.tarkov.dev/69398e94ca94fd2877039504-icon.webp"},
+{name:"Pestily plague mask",required:1,img:"https://assets.tarkov.dev/5e54f79686f7744022011103-icon.webp"},
+{name:"Press pass (issued for NoiceGuy)",required:1,img:"https://assets.tarkov.dev/62a09cb7a04c0c5c6e0a84f8-icon.webp"},
+{name:"Raven figurine",required:1,img:"https://assets.tarkov.dev/5e54f62086f774219b0f1937-icon.webp"},
+{name:"SheefGG piggy bank",required:1,img:"https://assets.tarkov.dev/69f9d319c906cd16da03b374-icon.webp"},
+{name:"Shroud half-mask",required:1,img:"https://assets.tarkov.dev/5e54f76986f7740366043752-icon.webp"},
+{name:"Silver Badge",required:1,img:"https://assets.tarkov.dev/5bc9bdb8d4351e003562b8a1-icon.webp"},
+{name:"Smoke balaclava",required:1,img:"https://assets.tarkov.dev/5fd8d28367cb5e077335170f-icon.webp"},
+{name:"Tamatthi kunai knife replica",required:1,img:"https://assets.tarkov.dev/66b37ea4c5d72b0277488439-icon.webp"},
+{name:"Tigzresq splint",required:1,img:"https://assets.tarkov.dev/6937ecf8628ee476240c07cb-icon.webp"},
+{name:"Veritas guitar pick",required:1,img:"https://assets.tarkov.dev/5f745ee30acaeb0d490d8c5b-icon.webp"},
+{name:"Video cassette with the Cyborg Killer movie",required:1,img:"https://assets.tarkov.dev/62a09e974f842e1bd12da3f0-icon.webp"},
+{name:"Viibiin sneaker",required:1,img:"https://assets.tarkov.dev/66b37eb4acff495a29492407-icon.webp"},
+{name:"WZ Wallet",required:1,img:"https://assets.tarkov.dev/60b0f6c058e0b0481a09ad11-icon.webp"}
+];
+
+const taskDetails={"chemical1":{"map":"CUSTOMS","summary":"副警備部長の情報を回収。列車周辺でSecure Folder 0013を探し、Dorm room 220 Keyも回収してSkierへ。"},"chemical2":{"map":"CUSTOMS","summary":"3階建て寮の2階・Dorm 220へ。支給キーで入室し、Sealed letter with a TG logo＋Sliderkey Secure Flash driveを回収→Skierへ。"},"chemical3":{"map":"FACTORY","summary":"事務所棟3階の指定エリアでSyringe with a chemicalを探して回収→生還してSkierへ。"},"chemical4":{"map":"CUSTOMS","summary":"工場地帯の倉庫にある科学薬品輸送バンを探し、MS2000 Markerを設置。Chemical 3択の1つ。"},"bigcustomer":{"map":"CUSTOMS","summary":"科学薬品輸送バンを探してMS2000 Markerを設置。Chemical Part 4 / Out of Curiosityとは3択で、1つだけ完了。"},"outofcuriosity":{"map":"CUSTOMS","summary":"科学薬品輸送バンを探してMS2000 Markerを設置。Chemical Part 4 / Big Customerとは3択で、1つだけ完了。"},"postman1":{"map":"FACTORY","summary":"南側のDead Scav付近でメッセンジャーの封書を回収→Factoryから脱出→Therapistへ。"},"postman2":{"map":"FACTORY","summary":"Postman Pat Part 1で回収した封書をTherapistへ渡す。Part 1と同じレイドでそのまま完了可能。"},"sew1":{"map":"—","summary":"Ski hat with holes for eyes ×1、Pilgrim tourist backpack ×1をFiRで確保→Ragmanへ納品。"},"sew2":{"map":"—","summary":"WARTECH TV-109 + TV-106 (A-TACS FG) ×2、BlackRock chest rig (Gray) ×2をFiRで集めてRagmanへ。"},"ts1":{"map":"—","summary":"スコープなしのボルトアクションで40m以上からSCAVを5キル。長距離を取れるマップで進める。"},"ts2":{"map":"—","summary":"ボルトアクションで40m以上から脚に3発＋頭に2発を命中。Shorelineなど長距離を取れるマップが楽。"},"ts3":{"map":"—","summary":"ボルトアクションで25m以内からPMCを3キル。Factoryなど近距離戦が起きやすいマップ向き。"},"ts4":{"map":"—","summary":"ボルトアクションで敵を15キル。距離・敵種の縛りなしなので通常レイドで数をこなす。"},"sbh":{"map":"CUSTOMS / LIGHTHOUSE / STREETS / SHORELINE / INTERCHANGE / GROUND ZERO / WOODS / RESERVE","summary":"4つのマップペアごとにボルトアクションでPMCを5ヘッドショット。①Customs/Lighthouse ②Streets/Shoreline ③Interchange/Ground Zero ④Woods/Reserve。"},"collector":{"map":"—","summary":"Collector対象44アイテムを各1個、FiRで回収してFenceへ納品。7トレーダーLL4＋Scav Karma +3＋指定Kappaタスク条件が必要。"}};
+const taskLinks={"chemical1": "https://tarkovforge.com/task-guide/chemical-part-1", "chemical2": "https://tarkovforge.com/task-guide/chemical-part-2", "chemical3": "https://tarkovforge.com/task-guide/chemical-part-3", "chemical4": "https://tarkovforge.com/task-guide/chemical-part-4", "bigcustomer": "https://tarkovforge.com/task-guide/big-customer", "outofcuriosity": "https://tarkovforge.com/task-guide/out-of-curiosity", "postman1": "https://tarkovforge.com/task-guide/postman-pat-part-1", "postman2": "https://tarkovforge.com/task-guide/postman-pat-part-2", "sew1": "https://tarkovforge.com/task-guide/sew-it-good-part-1", "sew2": "https://tarkovforge.com/task-guide/sew-it-good-part-2", "ts1": "https://tarkovforge.com/task-guide/the-tarkov-shooter-part-1", "ts2": "https://tarkovforge.com/task-guide/the-tarkov-shooter-part-2", "ts3": "https://tarkovforge.com/task-guide/the-tarkov-shooter-part-3", "ts4": "https://tarkovforge.com/task-guide/the-tarkov-shooter-part-4", "sbh": "https://tarkovforge.com/task-guide/shooter-born-in-heaven", "collector": "https://tarkovforge.com/task-guide/collector"};
+
+const tree=[
+["KAPPA ROOT",null,null],
+["├─ Chemical - Part 1","chemical1","前提"],
+["│  └─ Chemical - Part 2","chemical2","前提"],
+["│     └─ Chemical - Part 3","chemical3","Kappa"],
+["│        └─ Chemical - Part 4","chemical4","Kappa"],
+["│           ├─ Big Customer","bigcustomer","Kappa分岐"],
+["│           └─ Out of Curiosity","outofcuriosity","Kappa分岐"],
+["├─ Postman Pat - Part 1","postman1","前提"],
+["│  └─ Postman Pat - Part 2","postman2","Kappa"],
+["├─ Sew it Good - Part 1","sew1","前提"],
+["│  └─ Sew it Good - Part 2","sew2","Kappa"],
+["├─ The Tarkov Shooter - Part 1","ts1","前提"],
+["│  └─ Part 2","ts2","前提"],
+["│     └─ Part 3","ts3","前提"],
+["│        └─ Part 4","ts4","Kappa"],
+["├─ A Shooter Born in Heaven","sbh","Kappa"],
+["└─ Collector","collector","Kappa"]
+];
+
+function bindFallbackChecks(){document.querySelectorAll(".fallbackcheck[data-task]").forEach(x=>{x.checked=checked(x.dataset.task);x.onchange=e=>{set(x.dataset.task,e.target.checked);render();renderTree();};});}
+function key(id){return "kappa_"+id}
+function checked(id){return localStorage.getItem(key(id))==="1"}
+function set(id,v){localStorage.setItem(key(id),v?"1":"0")}
+function render(){
+ const f=document.getElementById("filter").value, app=document.getElementById("app"); app.innerHTML="";
+ groups.forEach(([title,rows])=>{
+   const visible=rows.filter(r=>f==="all"||(f==="done"?checked(r[0]):!checked(r[0])));
+   if(!visible.length)return;
+   const sec=document.createElement("section");sec.className="section";
+   sec.innerHTML="<h2>"+title+"</h2>";
+   visible.forEach(r=>{
+     const [id,name,trader,badge,star]=r,d=checked(id);
+     const wrap=document.createElement("div"); wrap.className="taskwrap";
+     const row=document.createElement("div"); row.className="taskrow"+(d?" done":"");
+     row.innerHTML=`<input class="check" type="checkbox" ${d?"checked":""}><div class="taskmain"><div class="tasktitle">${name}</div><div class="taskmeta">${trader} · ${badge}</div><div class="taskmap">🗺️ ${taskDetails[id]?.map||"—"}</div><div class="taskobjective">🎯 ${taskDetails[id]?.summary||"タスクの詳細を確認できます。"}</div></div>`;
+     row.querySelector("input").onchange=e=>{set(id,e.target.checked);render();renderTree()};
+     wrap.appendChild(row);sec.appendChild(wrap);
+   });
+   app.appendChild(sec);
+ });
+ updateStats()
+}
+function allIds(){return groups.flatMap(g=>g[1].map(r=>r[0]))}
+function updateStats(){
+ const ids=allIds(),d=ids.filter(checked).length,t=ids.length;
+ document.getElementById("done").textContent=d;document.getElementById("total").textContent=t;document.getElementById("remain").textContent=t-d;
+ const p=Math.round(d/t*100);document.getElementById("pct").textContent=p+"%";document.getElementById("bar").style.width=p+"%";
+}
+function markAll(v){allIds().forEach(id=>set(id,v));render()}
+function resetAll(){if(confirm("タスク・アイテム・条件の進捗をすべてリセットしますか？")){allIds().forEach(id=>set(id,false));collectorItems.forEach((_,i)=>localStorage.removeItem(itemQtyKey(i)));document.querySelectorAll("[data-extra]").forEach(x=>{localStorage.removeItem("extra_"+x.dataset.extra);x.checked=false});render();renderItems();renderTree()}}
+function saveExtra(el){localStorage.setItem("extra_"+el.dataset.extra,el.checked?"1":"0")}
+function renderTree(){
+ const el=document.getElementById("tree"); el.innerHTML="";
+ tree.forEach(([label,id,tag])=>{
+   const d=id?checked(id):false;
+   const row=document.createElement("div");row.className="node"+(d?" done":"");
+   if(id){
+     row.innerHTML=`<input type="checkbox" ${d?"checked":""}><span>${label}</span><span class="tag">${tag}</span>`;
+     row.querySelector("input").onchange=e=>{set(id,e.target.checked);render();renderTree()}
+   }else row.innerHTML=`<strong>${label}</strong>`;
+   el.appendChild(row);
+ })
+}
+function itemKey(i){return "kappa_item_"+i}
+function itemQtyKey(i){return "kappa_item_qty_"+i}
+function itemQty(i){return Math.max(0,Number(localStorage.getItem(itemQtyKey(i))||0))}
+function itemChecked(i){return itemQty(i)>=collectorItems[i].required}
+function renderItems(){
+ const f=document.getElementById("itemFilter").value, box=document.getElementById("items");box.innerHTML="";
+ collectorItems.forEach((item,i)=>{
+   const d=itemChecked(i); if(f==="done"&&!d || f==="todo"&&d)return;
+   const row=document.createElement("div");row.className="itemcard"+(d?" done":"");
+   const img=item.img?`<img class="itemimg" src="${item.img}" alt="">`:`<div class="itemimg"></div>`;
+   row.innerHTML=`${img}<div><div class="itemname">${i+1}. ${item.name}</div><div class="itemreq">必要数: ${item.required}　${d?"✓ 保有済み":"未達"}</div></div><div class="qtywrap"><input class="qty" type="number" min="0" value="${itemQty(i)}" aria-label="${item.name} 保有数"><span class="slash">/ ${item.required}</span></div>`;
+   row.querySelector(".qty").onchange=e=>{
+     const v=Math.max(0,Math.floor(Number(e.target.value)||0)); localStorage.setItem(itemQtyKey(i),String(v)); renderItems();
+   };
+   box.appendChild(row);
+ });
+ const n=collectorItems.filter((_,i)=>itemChecked(i)).length;
+ document.getElementById("itemCount").textContent=n+" / "+collectorItems.length;
+}
+function markItems(v){collectorItems.forEach((item,i)=>localStorage.setItem(itemQtyKey(i),v?String(item.required):"0"));renderItems()}
+document.querySelectorAll("[data-extra]").forEach(el=>el.checked=localStorage.getItem("extra_"+el.dataset.extra)==="1")
+renderTree();renderItems();render();
+bindFallbackChecks();
+</script>
+
+<script>
+document.querySelectorAll(".static-itemcard img[data-img-src]").forEach(img=>{
+  const real=new Image();
+  real.onload=()=>{img.src=real.src;};
+  real.src=img.dataset.imgSrc;
+});
+</script>
+</body>
+</html>
